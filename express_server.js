@@ -1,8 +1,16 @@
 const express = require('express');
+const bodyParser = require("body-parser");
 const app = express();
 const PORT = 8080;
 
+const generateRandomString = () => {
+  const randomString = (Math.random() + 1).toString(36).substring(6);
+  return randomString;
+};
+
 app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({extended: true}));
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -38,4 +46,9 @@ app.get("/urls/:shorturl", (req, res) => {
   const shortURL = req.params.shorturl;
   const templateVars = { shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
   res.render("urls_show", templateVars);
+});
+
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok");
 });
