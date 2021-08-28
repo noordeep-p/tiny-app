@@ -9,19 +9,20 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-    </div>
-  <% if (!currentUserByCookieIdObject) { %>
-    <form class="form-inline justify-content-end" action="/login" method="POST">
-      <div class="form-group">
-        <input class="form-control" type="text" name="userId" placeholder="Username" style="margin-block: inherit; margin-right: 1em;">
-        <button type="submit" class="btn btn-outline-dark">Login</button>
+      <% if (!currentUserByCookieIdObject) { %>
+      <div class="navbar-nav ml-auto">
+        <a class="nav-item nav-link" href="/register">Register</a>
+        <a class="nav-item nav-link" href="/login">Login</a>
       </div>
-    </form>
+    </div>
     <% } else { %>
-    <p class="card-text" style="margin-block: 0; margin-right: 1em;"> Logged In As: <%= currentUserByCookieIdObject.email %> User!</p>
-    <form method="POST" action="/logout">
+        <span class="navbar-text ml-auto" style="margin-right: 54em;">
+        </span>
+    <p style="margin: auto;"> Logged In As: <%= currentUserByCookieIdObject.email %>!</p>
+    <form class="ml-auto" method="POST" action="/logout">
       <button type="submit" class="btn btn-outline-danger">Logout</button>
     </form>
+    </div>
  <% } %>
 </nav>
 </header>
