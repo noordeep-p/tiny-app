@@ -1,17 +1,33 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-
 const app = express();
 const PORT = 8080;
+
+
+
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+
+
 
 const generateRandomString = () => {
   const randomString = (Math.random() + 1).toString(36).substring(6);
   return randomString;
 };
+
+const urlsForUserFunc = (id) => {
+  const urlsByUser = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userId === id) {
+      urlsByUser[url] = urlDatabase[url];
+    }
+  }
+  return urlsByUser;
+};
+
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -31,30 +47,52 @@ const users = {
   }
 };
 
+
+
 app.listen(PORT, () => {
-  console.log(`TinyApp listening port ${PORT}`);
+  console.log(`TinyApp server running & listening on ${PORT}`);
 });
 
 app.get("/urls/new", (req, res) => {
   const currentUserByCookieIdObject = users[req.cookies["userId"]];
   const templateVars = { currentUserByCookieIdObject };
-  res.render("urls_new", templateVars);
+  currentUserByCookieIdObject ?
+    res.render("urls_new", templateVars) :
+    res.render("register", templateVars);
 });
 
 app.post("/urls/:shorturl/delete", (req, res) => {
-  delete urlDatabase[req.params.shorturl];
-  res.redirect('/urls');
+  const currentUserByCookieIdObject = users[req.cookies["userId"]];
+  if (!currentUserByCookieIdObject) return res.sendStatus(403).end();
+  const currentUserURLs = urlsForUserFunc(currentUserByCookieIdObject.userId);
+  for (const url in currentUserURLs) {
+    if (req.params.shorturl === url) {
+      delete urlDatabase[req.params.shorturl];
+      res.redirect('/urls');
+    }
+  }
+  return res.sendStatus(403).end();
 });
 
 app.get("/urls", (req, res) => {
   const currentUserByCookieIdObject = users[req.cookies["userId"]];
-  const templateVars = { currentUserByCookieIdObject, urls: urlDatabase };
+  const urls =  currentUserByCookieIdObject ? urlsForUserFunc(currentUserByCookieIdObject.userId) : {};
+  const templateVars = { currentUserByCookieIdObject, urls };
   res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[`${shortURL}`] = [`${req.body.longURL}`];
+
+  class registerNewUrl {
+    constructor() {
+      this.userId = req.cookies["userId"],
+      this.longURL = req.body.longURL;
+    }
+  }
+
+  urlDatabase[shortURL] = new registerNewUrl();
+
   res.redirect('/urls');
 });
 
@@ -110,11 +148,12 @@ app.post("/register", (req, res) => {
   users[userId] = newUser;
   res.cookie("userId", userId);
   res.redirect("/urls");
+
 });
 
 app.get("/u/:shorturl", (req, res) => {
   const shortURL = req.params.shorturl;
-  urlDatabase[shortURL] ? res.redirect(urlDatabase[shortURL]) : res.send("Error: This is not a valid short URL");
+  urlDatabase[shortURL] ? res.redirect(urlDatabase[shortURL].longURL) : res.send("Error: This is not a valid short URL");
 });
 
 app.post("/urls/:shorturl", (req, res) => {
