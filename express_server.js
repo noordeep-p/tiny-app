@@ -58,9 +58,20 @@ app.post("/urls", (req, res) => {
   res.redirect('/urls');
 });
 
+app.get("/login", (req, res) => {
+  const currentUserByCookieIdObject = users[req.cookies["userId"]];
+  const templateVars = { currentUserByCookieIdObject };
+  res.render("login", templateVars);
+});
+
 app.post("/login", (req, res) => {
-  res.cookie('userId', req.body.userId);
-  res.redirect('/urls');
+  for (const user in users) {
+    if (users[user].email === req.body.email && users[user].password === req.body.password) {
+      res.cookie("userId", user);
+      return res.redirect('/urls');
+    }
+  }
+  return res.sendStatus(403).end();
 });
 
 app.post("/logout", (req, res) => {
@@ -69,7 +80,6 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  console.log(users);
   const currentUserByCookieIdObject = users[req.cookies["userId"]];
   const templateVars = { currentUserByCookieIdObject };
   res.render("register", templateVars);
