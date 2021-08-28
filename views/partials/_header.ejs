@@ -10,15 +10,15 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-  <% if (!username) { %>
+  <% if (!currentUserByCookieIdObject) { %>
     <form class="form-inline justify-content-end" action="/login" method="POST">
       <div class="form-group">
-        <input class="form-control" type="text" name="username" placeholder="Username" style="margin-block: inherit; margin-right: 1em;">
+        <input class="form-control" type="text" name="userId" placeholder="Username" style="margin-block: inherit; margin-right: 1em;">
         <button type="submit" class="btn btn-outline-dark">Login</button>
       </div>
     </form>
     <% } else { %>
-    <p class="card-text" style="margin-block: 0; margin-right: 1em;"> Logged In As: <%= username %> User!</p>
+    <p class="card-text" style="margin-block: 0; margin-right: 1em;"> Logged In As: <%= currentUserByCookieIdObject.email %> User!</p>
     <form method="POST" action="/logout">
       <button type="submit" class="btn btn-outline-danger">Logout</button>
     </form>
