@@ -13,4 +13,4 @@ const generateRandomString = () => {
   return randomString;
 };
 
-module.exports = getUserUrlsById, generateRandomString;
+module.exports = { getUserUrlsById, generateRandomString };

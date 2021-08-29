@@ -4,8 +4,7 @@ const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
-const getUserUrlsById = require('./helpers');
-const generateRandomString = require('./helpers');
+const { generateRandomString, getUserUrlsById } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
