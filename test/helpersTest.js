@@ -1,8 +1,6 @@
 const assert = require('chai').assert;
 
-
 const { generateRandomString } = require('../helpers');
-
 
 describe('generateRandomString', function() {
   it('should return a string that is 6 characters long', function() {

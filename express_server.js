@@ -1,3 +1,5 @@
+// SETTING TEMPLATING ENGINE, MIDDLEWARES AND IMPORTING HELPER FUNCTIONS
+
 const cookieSession = require('cookie-session');
 const express = require('express');
 const bodyParser = require("body-parser");
@@ -13,135 +15,111 @@ app.use(cookieSession({
   keys: ['key1', 'key2']
 }));
 
+// DATA STORAGE OBJECTS
+
 const urlDatabase = {};
 const users = {};
 
-
-
+// SERVER RESPONSES TO CLIENT REQUESTS AND RELATIVE PATHS
 
 app.listen(PORT, () => {
-  console.log(`TinyApp server running & listening on ${PORT}`);
+  console.log(`tinyURL is listening on ${PORT}`);
 });
 
-
-
-
 app.get("/urls/new", (req, res) => {
-  const currentUserByCookieIdObject = users[req.session["userId"]];
-  const templateVars = { currentUserByCookieIdObject };
-  currentUserByCookieIdObject ?
+  const currentUserByCookie = users[req.session["userId"]];
+  const templateVars = { currentUserByCookie };
+
+  currentUserByCookie ?
     res.render("urls_new", templateVars) :
     res.render("login", templateVars);
 });
 
-
-
-
 app.post("/urls/:shorturl/delete", (req, res) => {
-  const currentUserByCookieIdObject = users[req.session["userId"]];
+  const currentUserByCookie = users[req.session["userId"]];
 
-  if (!currentUserByCookieIdObject) return res.sendStatus(403).end();
-  const currentUserURLs = getUserUrlsById(currentUserByCookieIdObject.userId, urlDatabase);
+  if (!currentUserByCookie) {
+    return res.sendStatus(403);
+  }
+
+  const currentUserURLs = getUserUrlsById(currentUserByCookie.userId, urlDatabase);
 
   for (const url in currentUserURLs) {
     if (req.params.shorturl === url) {
       delete urlDatabase[req.params.shorturl];
-      res.redirect('/urls');
+      return res.redirect('/urls');
     }
   }
 
-  return res.sendStatus(403).end();
+  return res.sendStatus(403);
 });
-
-
-
 
 app.get("/urls", (req, res) => {
-  const currentUserByCookieIdObject = users[req.session["userId"]];
-  const urls =  currentUserByCookieIdObject ? getUserUrlsById(currentUserByCookieIdObject.userId, urlDatabase) : {};
-  const templateVars = { currentUserByCookieIdObject, urls };
+  const currentUserByCookie = users[req.session["userId"]];
+  const urls =  currentUserByCookie ? getUserUrlsById(currentUserByCookie.userId, urlDatabase) : {};
+  const templateVars = { currentUserByCookie, urls };
+
   res.render("urls_index", templateVars);
 });
-
-
-
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
 
-  class registerNewUrl {
+  class NEWURL {
     constructor() {
       this.userId = req.session["userId"],
       this.longURL = req.body.longURL;
     }
   }
-
-  urlDatabase[shortURL] = new registerNewUrl();
+  urlDatabase[shortURL] = new NEWURL();
 
   res.redirect('/urls');
 });
 
-
-
-
 app.get("/login", (req, res) => {
-  const currentUserByCookieIdObject = users[req.session["userId"]];
-  const templateVars = { currentUserByCookieIdObject };
+  const currentUserByCookie = users[req.session["userId"]];
+  const templateVars = { currentUserByCookie };
+
   res.render("login", templateVars);
 });
 
-
-
-
 app.post("/login", (req, res) => {
-
   for (const user in users) {
     if (users[user].email === req.body.email && bcrypt.compareSync(req.body.password, users[user].password)) {
       req.session.userId = user;
       return res.redirect('/urls');
     }
   }
-
-  return res.sendStatus(403).end();
+  return res.sendStatus(403);
 });
-
-
-
 
 app.post("/logout", (req, res) => {
   req.session.userId = null;
   res.redirect("/urls");
 });
 
-
-
-
 app.get("/register", (req, res) => {
-  const currentUserByCookieIdObject = users[req.session["userId"]];
-  const templateVars = { currentUserByCookieIdObject };
+  const currentUserByCookie = users[req.session["userId"]];
+  const templateVars = { currentUserByCookie };
+
   res.render("register", templateVars);
 });
 
-
-
-
 app.post("/register", (req, res) => {
-
   if (!req.body.email || !req.body.password) {
-    return res.sendStatus(400).end();
+    return res.sendStatus(400);
   }
-
   for (const user in users) {
     if (users[user].email === req.body.email) {
-      return res.sendStatus(400).end();
+      return res.sendStatus(400);
     }
   }
   
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
-
   const userId = generateRandomString();
-  class registerNewUser {
+
+  class NEWUSER {
     constructor(userId) {
       this.userId = userId,
       this.email = req.body.email,
@@ -149,41 +127,30 @@ app.post("/register", (req, res) => {
     }
   }
 
-  const newUser = new registerNewUser(userId);
+  const newUser = new NEWUSER(userId);
   users[userId] = newUser;
   req.session.userId = userId;
+
   res.redirect("/urls");
-
 });
-
-
-
 
 app.get("/u/:shorturl", (req, res) => {
   const shortURL = req.params.shorturl;
   urlDatabase[shortURL] ? res.redirect(urlDatabase[shortURL].longURL) : res.send("Error: This is not a valid short URL");
 });
 
-
-
-
 app.post("/urls/:shorturl", (req, res) => {
   urlDatabase[req.params.shorturl].longURL = req.body.newLongURL;
   res.redirect("/urls");
 });
 
-
-
-
 app.get("/urls/:shorturl", (req, res) => {
   const shortURL = req.params.shorturl;
-  const currentUserByCookieIdObject = users[req.session["userId"]];
-  const templateVars = { currentUserByCookieIdObject, shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
+  const currentUserByCookie = users[req.session["userId"]];
+  const templateVars = { currentUserByCookie, shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
+
   res.render("urls_show", templateVars);
 });
-
-
-
 
 app.get("/", (req, res) => {
   res.redirect("/urls");

@@ -1,3 +1,5 @@
+// HELPERS FUNCTIONS USED INSIDE THE SERVER
+
 const getUserUrlsById = (id, urlDatabase) => {
   const urlsByUser = {};
   for (const url in urlDatabase) {
