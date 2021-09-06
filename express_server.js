@@ -22,14 +22,10 @@ const users = {};
 
 // SERVER RESPONSES TO CLIENT REQUESTS AND RELATIVE PATHS
 
-app.listen(PORT, () => {
-  console.log(`tinyURL is listening on ${PORT}`);
-});
-
 app.get("/urls/new", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
   const templateVars = { currentUserByCookie };
-
+  
   currentUserByCookie ?
     res.render("urls_new", templateVars) :
     res.render("login", templateVars);
@@ -37,20 +33,20 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls/:shorturl/delete", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
-
+  
   if (!currentUserByCookie) {
     return res.sendStatus(403);
   }
-
+  
   const currentUserURLs = getUserUrlsById(currentUserByCookie.userId, urlDatabase);
-
+  
   for (const url in currentUserURLs) {
     if (req.params.shorturl === url) {
       delete urlDatabase[req.params.shorturl];
       return res.redirect('/urls');
     }
   }
-
+  
   return res.sendStatus(403);
 });
 
@@ -58,13 +54,13 @@ app.get("/urls", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
   const urls =  currentUserByCookie ? getUserUrlsById(currentUserByCookie.userId, urlDatabase) : {};
   const templateVars = { currentUserByCookie, urls };
-
+  
   res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-
+  
   class NEWURL {
     constructor() {
       this.userId = req.session["userId"],
@@ -72,14 +68,14 @@ app.post("/urls", (req, res) => {
     }
   }
   urlDatabase[shortURL] = new NEWURL();
-
+  
   res.redirect('/urls');
 });
 
 app.get("/login", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
   const templateVars = { currentUserByCookie };
-
+  
   res.render("login", templateVars);
 });
 
@@ -101,7 +97,7 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
   const templateVars = { currentUserByCookie };
-
+  
   res.render("register", templateVars);
 });
 
@@ -118,7 +114,7 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userId = generateRandomString();
-
+  
   class NEWUSER {
     constructor(userId) {
       this.userId = userId,
@@ -126,11 +122,11 @@ app.post("/register", (req, res) => {
       this.password = hashedPassword;
     }
   }
-
+  
   const newUser = new NEWUSER(userId);
   users[userId] = newUser;
   req.session.userId = userId;
-
+  
   res.redirect("/urls");
 });
 
@@ -146,16 +142,20 @@ app.post("/urls/:shorturl", (req, res) => {
 
 app.get("/urls/:shorturl", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
-
+  
   if (!currentUserByCookie) {
     return res.redirect("/");
   }
   const shortURL = req.params.shorturl;
   const templateVars = { currentUserByCookie, shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
-
+  
   res.render("urls_show", templateVars);
 });
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
+});
+
+app.listen(PORT, () => {
+  console.log(`tinyURL is listening on ${PORT}`);
 });
