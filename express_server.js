@@ -145,8 +145,12 @@ app.post("/urls/:shorturl", (req, res) => {
 });
 
 app.get("/urls/:shorturl", (req, res) => {
-  const shortURL = req.params.shorturl;
   const currentUserByCookie = users[req.session["userId"]];
+
+  if (!currentUserByCookie) {
+    return res.redirect("/");
+  }
+  const shortURL = req.params.shorturl;
   const templateVars = { currentUserByCookie, shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
 
   res.render("urls_show", templateVars);
