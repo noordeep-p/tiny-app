@@ -136,6 +136,11 @@ app.get("/u/:shorturl", (req, res) => {
 });
 
 app.post("/urls/:shorturl", (req, res) => {
+  const currentUserByCookie = users[req.session["userId"]];
+
+  if (!currentUserByCookie) {
+    return res.sendStatus(403);
+  }
   urlDatabase[req.params.shorturl].longURL = req.body.newLongURL;
   res.redirect("/urls");
 });
