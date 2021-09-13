@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 const { generateRandomString, getUserUrlsById } = require('./helpers');
+const { Url, User } = require('./classes');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -60,14 +61,7 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  
-  class NEWURL {
-    constructor() {
-      this.userId = req.session["userId"],
-      this.longURL = req.body.longURL;
-    }
-  }
-  urlDatabase[shortURL] = new NEWURL();
+  urlDatabase[shortURL] = new Url(req.session["userId"], req.body.longURL);
   
   res.redirect('/urls');
 });
@@ -110,23 +104,11 @@ app.post("/register", (req, res) => {
       return res.sendStatus(400);
     }
   }
-  
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
   const userId = generateRandomString();
-  
-  class NEWUSER {
-    constructor(userId) {
-      this.userId = userId,
-      this.email = req.body.email,
-      this.password = hashedPassword;
-    }
-  }
-  
-  const newUser = new NEWUSER(userId);
+  const newUser = new User(userId, req.body.email, bcrypt.hashSync(password, 10));
   users[userId] = newUser;
   req.session.userId = userId;
-  
   res.redirect("/urls");
 });
 
@@ -149,12 +131,16 @@ app.get("/urls/:shorturl", (req, res) => {
   const currentUserByCookie = users[req.session["userId"]];
   
   if (!currentUserByCookie) {
-    return res.redirect("/");
+    return res.sendStatus(403);
   }
-  const shortURL = req.params.shorturl;
-  const templateVars = { currentUserByCookie, shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
-  
-  res.render("urls_show", templateVars);
+  for (const urls in urlDatabase) {
+    if (urlDatabase[urls].userId === currentUserByCookie.userId) {
+      const shortURL = req.params.shorturl;
+      const templateVars = { currentUserByCookie, shortURL: req.params.shorturl, longURL: urlDatabase[shortURL]};
+      return res.render("urls_show", templateVars);
+    }
+  }
+  return res.sendStatus(403);
 });
 
 app.get("/", (req, res) => {
